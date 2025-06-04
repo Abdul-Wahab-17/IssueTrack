@@ -1,14 +1,10 @@
 package com.tracker.tracker.controllers;
 
-import java.net.http.HttpResponse;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,14 +13,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tracker.tracker.models.MyUserDetails;
-import com.tracker.tracker.models.Role;
 import com.tracker.tracker.models.User;
 import com.tracker.tracker.services.UserService;
 
@@ -61,14 +55,20 @@ public class UserController {
     }
 
     @PostMapping("/api/auth/login")
-    public HttpStatus login(@RequestBody LoginRequest loginRequest){
-
-      try {  Authentication auth = manager.authenticate( new UsernamePasswordAuthenticationToken(loginRequest.username, loginRequest.password));
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        return HttpStatus.OK;}
-    catch (BadCredentialsException e){
-        return HttpStatus.UNAUTHORIZED;
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {       
+            Authentication auth = manager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    loginRequest.username,
+                    loginRequest.password
+                )
+            );
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return ResponseEntity.ok("Login successful");
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
     }
 
-}
+
 }
