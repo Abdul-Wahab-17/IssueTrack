@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tracker.tracker.models.MyUserDetails;
 import com.tracker.tracker.models.User;
 import com.tracker.tracker.services.UserService;
 
@@ -31,13 +32,15 @@ public class UserController {
     @Autowired
     AuthenticationManager manager;
 
-    @GetMapping("/api/users/me")
-    public Map<String , String> getLoggedInInfo(){
-        Map<String , String> map = new HashMap<>();
-       String username =  ( (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal() ).getUsername();
-       map = userService.getUserInfo(username);
-        return map;
 
+    @GetMapping("/api/users/me")
+    public ResponseEntity<?> getLoggedInInfo(){
+        Map<String , String> map = new HashMap<>();
+       User user =  ( (MyUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal() ).user;
+       map.put("username", user.getUsername());
+       map.put("email", user.getEmail());
+       map.put("role", user.getRole().toString());
+        return ResponseEntity.status(200).body(map);
     }
 
     @GetMapping("/api/users")
@@ -56,7 +59,7 @@ public class UserController {
 
     @PostMapping("/api/auth/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        try {       
+        try {
             Authentication auth = manager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     loginRequest.username,
@@ -64,7 +67,13 @@ public class UserController {
                 )
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
-            return ResponseEntity.ok("Login successful");
+            User user = ((MyUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).user;
+             Map<String , String> map = new HashMap<>();
+
+       map.put("username", user.getUsername());
+       map.put("email", user.getEmail());
+       map.put("role", user.getRole().toString());
+            return ResponseEntity.status(200).body(map);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
