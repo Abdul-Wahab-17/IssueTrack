@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tracker.tracker.models.MyUserDetails;
 import com.tracker.tracker.models.User;
 import com.tracker.tracker.services.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 public class UserController {
@@ -58,7 +61,7 @@ public class UserController {
     }
 
     @PostMapping("/api/auth/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest req) {
         try {
             Authentication auth = manager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -66,7 +69,12 @@ public class UserController {
                     loginRequest.password
                 )
             );
+
             SecurityContextHolder.getContext().setAuthentication(auth);
+
+                req.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());;
+
+
             User user = ((MyUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).user;
              Map<String , String> map = new HashMap<>();
 

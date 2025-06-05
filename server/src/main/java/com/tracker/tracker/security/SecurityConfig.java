@@ -16,13 +16,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 
 @Configuration
 @EnableWebSecurity
@@ -34,24 +35,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+         SecurityContextRepository repo = new HttpSessionSecurityContextRepository();
         http
         .cors( C -> C.configurationSource(configurationSource()))
         .csrf(csrf -> csrf.disable())
+        .securityContext((context) -> context.securityContextRepository(repo))
         .authorizeHttpRequests((authorize)->authorize
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
-        .httpBasic(Customizer.withDefaults())
-        .formLogin(form -> form.disable())
-        .logout(logout -> logout
-            .logoutUrl("/api/auth/logout")
-            .invalidateHttpSession(true)
-            .deleteCookies("JSESSIONID")
-            .logoutSuccessHandler((request, response, authentication) -> {
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"message\": \"Logged out successfully\"}");
-            }));
+        .logout( c -> c.logoutUrl("/api/auth/logout"))
+        .httpBasic(basic -> basic.disable())
+        .formLogin(form -> form.disable() );
 
 
         return http.build();
